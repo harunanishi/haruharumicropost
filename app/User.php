@@ -42,6 +42,7 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'user_follow', 'follow_id', 'user_id')->withTimestamps();
     }
     
+    
     public function follow($userId)
 {
     // confirm if already following
@@ -88,4 +89,57 @@ public function feed_microposts()
         $follow_user_ids[] = $this->id;
         return Micropost::whereIn('user_id', $follow_user_ids);
     }
+    
+ public function favorings()
+    {
+        return $this->belongsToMany(Micropost::class, 'micropost_user', 'user_id', 'content_id')->withTimestamps();
+    }    
+    
+public function favorite($contentId)
+{
+    // confirm if already following
+    $exist = $this->is_favoring($contentId);
+    // confirming that it is not you
+   
+
+    if ($exist === $contentId) {
+        // do nothing if already following
+        return false;
+    } else {
+        // follow if not following
+        $this->favorings()->attach($contentId);
+        return true;
+    }
+}
+
+
+public function unfavorite($contentId)
+{
+    // confirming if already following
+    $exist = $this->is_favoring($contentId);
+    // confirming that it is not you
+ 
+
+
+    if ($exist) {
+        // stop following if following
+        $this->favorings()->detach($contentId);
+        return true;
+    } else {
+        // do nothing if not following
+        return false;
+    }
+}
+
+public function is_favoring($contentId) {
+    return $this->favorings()->where('content_id', $contentId)->exists();
+}
+
+public function feed_favorites()
+    {
+        $favorite_content_ids = $this->favorings()-> pluck('contents.id')->toArray();
+        $favorite_content_ids[] = $micropost->id;
+        return Micropost::whereIn('id', $follow_content_ids);
+    }
+    
 }
